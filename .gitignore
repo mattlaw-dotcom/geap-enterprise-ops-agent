@@ -1,0 +1,32 @@
+# Virtual environments & Python artifacts
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+
+# Local secrets & runtime SQLite databases
+.env
+.env.*
+!.env.example
+data/
+*.db
+*.db-journal
+*.sqlite*
+
+# Terraform local state & provider cache
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfplan
+terraform/.terraform.lock.hcl
+
+# OS & editor files
+.DS_Store
+.vscode/
+.idea/

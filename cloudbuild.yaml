@@ -1,0 +1,71 @@
+# Google Cloud Build CI/CD pipeline for GEAP Enterprise Ops Multi-Agent ADK App.
+# Runs linting, unit tests, golden dataset evaluations, Terraform validation,
+# and Vertex AI Agent Engine deployment with secrets injected via Secret Manager.
+
+substitutions:
+  _REGION: us-central1
+  _APP_NAME: geap_enterprise_ops_agent
+  _RUNTIME_SA: geap-ops-agent-sa@${PROJECT_ID}.iam.gserviceaccount.com
+
+steps:
+  - id: install-and-lint
+    name: python:3.11-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        ruff check agent_app evals tests
+
+  - id: run-unit-tests
+    name: python:3.11-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        pytest -v
+
+  - id: run-golden-evals
+    name: python:3.11-slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        python3 evals/run_evals.py --evalset evals/golden_evalset.json
+
+  - id: validate-terraform-iac
+    name: hashicorp/terraform:1.9
+    entrypoint: sh
+    args:
+      - -ceu
+      - |
+        terraform -chdir=terraform fmt -check -recursive
+        terraform -chdir=terraform init -backend=false
+        terraform -chdir=terraform validate
+
+  - id: deploy-agent-engine
+    name: python:3.11-slim
+    entrypoint: bash
+    secretEnv:
+      - OPS_DATABASE_URL
+    args:
+      - -ceu
+      - |
+        pip install --no-cache-dir -r requirements.txt
+        adk deploy agent_engine \
+          --project=${PROJECT_ID} \
+          --region=${_REGION} \
+          --display_name=${_APP_NAME} \
+          --service_account=${_RUNTIME_SA} \
+          --otel_to_cloud \
+          agent_app
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/${PROJECT_ID}/secrets/ops-db-url/versions/latest
+      env: OPS_DATABASE_URL
+
+options:
+  logging: CLOUD_LOGGING_ONLY

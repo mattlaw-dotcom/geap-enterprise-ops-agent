@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "geap-enterprise-ops-agent"
+version = "1.0.0"
+description = "Production-ready Google ADK Multi-Agent Enterprise Operations & Incident Triage system built for the GEAP AI in 5 Days Assessment."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-adk>=1.18.0",
+    "pydantic>=2.10.0",
+    "structlog>=24.4.0",
+    "opentelemetry-api>=1.28.0",
+    "opentelemetry-sdk>=1.28.0",
+    "google-cloud-dlp>=3.24.0",
+    "google-cloud-secret-manager>=2.21.0",
+    "sqlalchemy[asyncio]>=2.0.36",
+    "aiosqlite>=0.20.0",
+    "greenlet>=3.1.0",
+    "python-dotenv>=1.0.1",
+    "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.7.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["agent_app*", "evals*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:SequentialAgent is deprecated:DeprecationWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"evals/run_evals.py" = ["E402"]
